@@ -3,17 +3,22 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
-# Načtení proměnných prostředí ze souboru .env
+# Načtení proměnných prostředí ze souboru .env (pro lokální testování)
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 class AddressBot(discord.Client):
     def __init__(self):
-        super().__init__(intents=discord.Intents.default())
+        # Nastavení intents pro správné fungování zpráv a DM
+        intents = discord.Intents.default()
+        intents.message_content = True
+        intents.dm_messages = True
+        
+        super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        # Globální synchronizace příkazů pro server
+        # Globální synchronizace příkazů
         await self.tree.sync()
         print("Příkazy bota byly úspěšně synchronizovány!")
 
@@ -22,7 +27,7 @@ bot = AddressBot()
 @bot.event
 async def on_ready():
     print(f"Přihlášen jako {bot.user} (ID: {bot.user.id})")
-    print("Bot je plně připraven k použití na serveru!")
+    print("Bot je plně připraven k použití na serveru i v DM!")
 
 @bot.tree.command(name="address", description="Zobrazí platební adresy pro kryptoměny")
 async def address(interaction: discord.Interaction):
@@ -32,7 +37,7 @@ async def address(interaction: discord.Interaction):
         color=discord.Color.from_rgb(30, 35, 40)
     )
     
-    # Přidání polí s adresami v blocích kódu (zajišťuje vzhled a možnost kopírování)
+    # Přidání polí s adresami v blocích kódu
     embed.add_field(
         name="1. Bitcoin (BTC)", 
         value="```bc1q3esetxuq39y2a7egpc7e4qh37lsg2qqgaz6pg```", 
@@ -59,12 +64,12 @@ async def address(interaction: discord.Interaction):
         inline=False
     )
 
-    # Odeslání odpovědi viditelné pro všechny v kanálu
+    # Odeslání odpovědi
     await interaction.response.send_message(embed=embed)
 
 # Spuštění bota
 if __name__ == "__main__":
     if not TOKEN:
-        print("Chyba: Token nebyl nalezen! Zkontroluj soubor .env.")
+        print("Chyba: Token nebyl nalezen! Zkontroluj nastavení na Renderu.")
     else:
         bot.run(TOKEN)
